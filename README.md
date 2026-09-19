@@ -15,6 +15,10 @@ Python, FastAPI, SQLite, SQLAlchemy, HTML/CSS/JS
 
 Нужен Python 3.11+.
 
+## Живая версия
+
+https://notesvault-6eg9.onrender.com/login
+
 ```bash
 git clone https://github.com/ognaprikole/notevault.git
 cd notevault
