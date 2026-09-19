@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>NoteVault — Вход</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="wrap">
+    <div class="card">
+        <h1>NoteVault</h1>
+        <p class="sub">Вход или регистрация</p>
+        <label>Имя</label>
+        <input id="username">
+        <label>Пароль</label>
+        <input id="password" type="password">
+        <div class="row">
+            <button type="button" id="login-btn">Войти</button>
+            <button type="button" id="reg-btn" style="background:#2A2E38;color:#E8E6E1">Регистрация</button>
+        </div>
+        <p class="msg" id="msg"></p>
+    </div>
+</div>
+<script>
+function show(text, isErr) {
+    const msg = document.getElementById("msg");
+    msg.className = isErr ? "msg err" : "msg";
+    msg.textContent = text;
+}
+
+async function send(path) {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+    show("Отправляю...");
+    const body = new URLSearchParams();
+    body.set("username", username);
+    body.set("password", password);
+    try {
+        const r = await fetch(path, {
+            method: "POST",
+            body,
+            credentials: "include",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) {
+            show(typeof data.detail === "string" ? data.detail : "Ошибка " + r.status, true);
+            return;
+        }
+        window.location.href = "/notes";
+    } catch (e) {
+        show("Сеть: " + e.message, true);
+    }
+}
+
+document.getElementById("login-btn").addEventListener("click", function () {
+    send("/login");
+});
+document.getElementById("reg-btn").addEventListener("click", function () {
+    send("/register");
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>NoteVault — Заметки</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="wrap">
+    <div class="card">
+        <h1>Мои заметки</h1>
+        <p class="sub" id="who">...</p>
+
+        <label>Заголовок</label>
+        <input id="title">
+        <label>Текст</label>
+        <textarea id="body" rows="4"></textarea>
+        <button id="add-btn">Добавить</button>
+        <p class="msg" id="msg"></p>
+
+        <div id="list"></div>
+        <button id="logout-btn" style="background:#2A2E38;color:#E8E6E1;margin-top:20px">Выйти</button>
+    </div>
+</div>
+<script>
+async function ensureAuth() {
+    const r = await fetch("/me", { credentials: "include" });
+    if (!r.ok) {
+        location.href = "/login";
+        return null;
+    }
+    const data = await r.json();
+    document.getElementById("who").textContent = "Пользователь: " + data.username;
+    return data.username;
+}
+
+async function loadNotes() {
+    const r = await fetch("/api/notes", { credentials: "include" });
+    if (!r.ok) return;
+    const notes = await r.json();
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+    notes.forEach((n) => {
+        const div = document.createElement("div");
+        div.className = "note";
+
+        const h = document.createElement("input");
+        h.value = n.title;
+
+        const t = document.createElement("textarea");
+        t.rows = 3;
+        t.value = n.body || "";
+
+        const save = document.createElement("button");
+        save.textContent = "Сохранить";
+        save.onclick = () => editNote(n.id, h.value, t.value);
+
+        const del = document.createElement("button");
+        del.textContent = "Удалить";
+        del.style.background = "#2A2E38";
+        del.style.color = "#E8E6E1";
+        del.onclick = () => removeNote(n.id);
+
+        div.append(h, t, save, del);
+        list.appendChild(div);
+    });
+}
+
+async function editNote(id, title, body) {
+    const data = new URLSearchParams({ title, body });
+    const r = await fetch("/api/notes/" + id + "/edit", {
+        method: "POST",
+        body: data,
+        credentials: "include",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    if (!r.ok) {
+        document.getElementById("msg").textContent = "Не удалось сохранить";
+        return;
+    }
+    loadNotes();
+}
+
+async function addNote() {
+    const title = document.getElementById("title").value;
+    const body = document.getElementById("body").value;
+    const data = new URLSearchParams({ title, body });
+    const r = await fetch("/api/notes", {
+        method: "POST",
+        body: data,
+        credentials: "include",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    if (!r.ok) {
+        document.getElementById("msg").textContent = "Не удалось сохранить";
+        return;
+    }
+    document.getElementById("title").value = "";
+    document.getElementById("body").value = "";
+    document.getElementById("msg").textContent = "";
+    loadNotes();
+}
+
+async function removeNote(id) {
+    await fetch("/api/notes/" + id, { method: "DELETE", credentials: "include" });
+    loadNotes();
+}
+
+document.getElementById("add-btn").onclick = addNote;
+document.getElementById("logout-btn").onclick = async () => {
+    await fetch("/logout", { method: "POST", credentials: "include" });
+    location.href = "/login";
+};
+
+ensureAuth().then((u) => { if (u) loadNotes(); });
+</script>
+</body>
+</html>
