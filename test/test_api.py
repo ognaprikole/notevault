@@ -47,3 +47,27 @@ def test_create_and_list_note():
     assert listed.status_code == 200
     titles = [n["title"] for n in listed.json()]
     assert "первая" in titles
+
+def test_cannot_delete_foreign_note():
+    owner = "u_" + uuid.uuid4().hex[:8]
+    other = "u_" + uuid.uuid4().hex[:8]
+
+    client.post("/register", data={"username": owner, "password": "1234"})
+    client.post("/login", data={"username": owner, "password": "1234"})
+    created = client.post("/api/notes", data={"title": "секрет", "body": "нет"})
+    note_id = created.json()["id"]
+    client.post("/logout")
+
+    client.post("/register", data={"username": other, "password": "1234"})
+    client.post("/login", data={"username": other, "password": "1234"})
+    deleted = client.delete(f"/api/notes/{note_id}")
+    assert deleted.status_code == 404
+
+
+def test_me_after_logout():
+    name = "u_" + uuid.uuid4().hex[:8]
+    client.post("/register", data={"username": name, "password": "1234"})
+    client.post("/login", data={"username": name, "password": "1234"})
+    client.post("/logout")
+    me = client.get("/me")
+    assert me.status_code == 401
