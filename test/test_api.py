@@ -1,8 +1,9 @@
 from fastapi.testclient import TestClient
 from backend.main import app
+from backend.database import init_db
 
+init_db()
 client = TestClient(app)
-
 
 def test_ping():
     response = client.get("/ping")
