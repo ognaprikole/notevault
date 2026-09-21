@@ -3,3 +3,5 @@ uvicorn[standard]
 sqlalchemy
 bcrypt
 python-multipart
+pytest
+httpx
